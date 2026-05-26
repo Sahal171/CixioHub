@@ -11,8 +11,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.hashing import verify_password
 from app.auth.jwt_handler import create_access_token
 
-from fastapi.security import OAuth2PasswordBearer
-from app.auth.jwt_handler import verify_access_token
+from app.auth.jwt_handler import get_current_user
 
 router = APIRouter()
 
@@ -76,38 +75,13 @@ def login(
 def get_users(db: Session = Depends(get_db)):
     return db.query(User).all()
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login"
-)
-
 @router.get("/me")
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+def read_current_user(
+    current_user = Depends(get_current_user)
 ):
 
-    payload = verify_access_token(token)
-
-    if payload is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token"
-        )
-
-    email = payload.get("sub")
-
-    user = db.query(User).filter(
-        User.email == email
-    ).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-
     return {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email
     }
