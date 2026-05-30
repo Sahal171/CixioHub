@@ -5,12 +5,21 @@ from app.auth.hashing import hash_password
 from app.routes.auth import router as auth_router
 from app.models.note import Note
 from app.routes.notes import router as notes_router
+from app.models.task import Task
+from app.routes.tasks import router as tasks_router
+from app.models.document import Document
+from app.routes.documents import router as documents_router
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-app.include_router(auth_router, prefix="/auth")
-app.include_router(notes_router, prefix="/notes")
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+app.include_router(notes_router, prefix="/notes", tags=["Notes"])
+
+app.include_router(tasks_router,prefix="/tasks",tags=["Tasks"])
+
+app.include_router(documents_router,prefix="/documents",tags=["Documents"])
 
 @app.get("/")
 def home():
@@ -25,4 +34,5 @@ def test_hash(password:str):
     return {
         "hashed": hash_password(password)
     }
+
 

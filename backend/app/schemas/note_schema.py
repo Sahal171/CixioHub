@@ -6,3 +6,5 @@ class NoteCreate(BaseModel):
     title: str
 
     content: str
+
+    tags: str | None = None

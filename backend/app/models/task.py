@@ -1,36 +1,29 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.database.db import Base
 
 
-class Note(Base):
+class Task(Base):
 
-    __tablename__ = "notes"
+    __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, index=True)
 
     title = Column(String)
 
-    content = Column(String)
+    description = Column(String)
 
-    owner_id = Column(
+    status = Column(String, default="pending")
+
+    due_date = Column(String)
+
+    user_id = Column(
         Integer,
         ForeignKey("users.id")
     )
-
-    tags = Column(String, nullable=True)
 
     created_at = Column(
         DateTime,
         default=datetime.utcnow
     )
-
-    updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
-
-    owner = relationship("User")

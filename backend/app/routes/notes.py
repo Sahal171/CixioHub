@@ -6,6 +6,8 @@ from app.models.note import Note
 from app.schemas.note_schema import NoteCreate
 from app.auth.jwt_handler import get_current_user
 
+from sqlalchemy import or_
+
 router = APIRouter()
 
 
@@ -30,6 +32,7 @@ def create_note(
     new_note = Note(
         title=note.title,
         content=note.content,
+        tags=note.tags,
         owner_id=current_user.id
     )
 
@@ -55,6 +58,22 @@ def get_notes(
         Note.owner_id == current_user.id
     ).all()
 
+    return notes
+
+#Searching
+@router.get("/search")
+def search_notes(
+    keyword: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    notes = db.query(Note).filter(
+        Note.owner_id == current_user.id,
+        or_(
+            Note.title.contains(keyword),
+    Note.tags.contains(keyword)
+        )
+    ).all()
     return notes
 
 #GET Note by id
@@ -135,3 +154,4 @@ def delete_note(
     return {
         "message": "Note deleted successfully"
     }
+
