@@ -9,6 +9,8 @@ import shutil
 
 from app.models.document import Document
 
+from fastapi.responses import FileResponse
+
 router = APIRouter()
 
 @router.post("/upload")
@@ -55,6 +57,20 @@ def get_documents(
 
 from fastapi import HTTPException
 
+@router.get("/search")
+def search_documents(
+    keyword: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    documents = db.query(Document).filter(
+        Document.user_id == current_user.id,
+        Document.filename.contains(keyword)
+    ).all()
+
+    return documents
+
 @router.get("/{document_id}")
 def get_document(
     document_id: int,
@@ -74,6 +90,29 @@ def get_document(
         )
 
     return document
+
+@router.get("/download/{document_id}")
+def download_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.user_id == current_user.id
+    ).first()
+
+    if not document:
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found"
+        )
+
+    return FileResponse(
+        path=document.filepath,
+        filename=document.filename
+    )
 
 @router.delete("/{document_id}")
 def delete_document(
