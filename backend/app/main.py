@@ -9,10 +9,20 @@ from app.models.task import Task
 from app.routes.tasks import router as tasks_router
 from app.models.document import Document
 from app.routes.documents import router as documents_router
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 
 app.include_router(notes_router, prefix="/notes", tags=["Notes"])
