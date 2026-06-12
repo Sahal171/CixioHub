@@ -12,33 +12,27 @@ from app.auth.hashing import verify_password
 
 from app.auth.jwt_handler import get_current_user, create_access_token
 
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
-
 router = APIRouter()
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
 
+    existing_user = db.query(User).filter(
+        User.email == user.email
+    ).first()
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already registered"
+        )
+
     hashed_pwd = hash_password(user.password)
-
-    role = "user"
-    status = "pending"
-
-    if user.email == ADMIN_EMAIL:
-        role = "admin"
-        status = "approved"
 
     new_user = User(
         name=user.name,
         email=user.email,
-        password_hash=hashed_pwd,
-        role=role,
-        status=status
+        password_hash=hashed_pwd
     )
 
     db.add(new_user)

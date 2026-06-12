@@ -59,3 +59,29 @@ def approve_user(
     return {
         "message": f"{user.email} approved successfully"
     }
+
+@router.put("/reject/{user_id}")
+def reject_user(
+    user_id: int,
+    admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.status = "rejected"
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": f"{user.email} rejected successfully"
+    }
