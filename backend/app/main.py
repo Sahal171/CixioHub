@@ -10,6 +10,7 @@ from app.routes.tasks import router as tasks_router
 from app.models.document import Document
 from app.routes.documents import router as documents_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.routes.admin import router as admin_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -24,6 +25,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+
+app.include_router(admin_router, prefix="/admin", tags=["User Management"])
 
 app.include_router(notes_router, prefix="/notes", tags=["Notes"])
 

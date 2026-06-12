@@ -8,10 +8,16 @@ from sqlalchemy.orm import Session
 from app.database.db import SessionLocal
 from app.models.user import User
 
+from dotenv import load_dotenv
+import os
 
-SECRET_KEY = "smarthub_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+)
 
 
 oauth2_scheme = OAuth2PasswordBearer(
@@ -90,3 +96,15 @@ def get_current_user(
         )
 
     return user
+
+def get_current_admin(
+    current_user: User = Depends(get_current_user)
+):
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+
+    return current_user

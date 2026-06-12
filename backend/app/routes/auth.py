@@ -9,9 +9,15 @@ from app.auth.hashing import hash_password
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.auth.hashing import verify_password
-from app.auth.jwt_handler import create_access_token
 
-from app.auth.jwt_handler import get_current_user
+from app.auth.jwt_handler import get_current_user, create_access_token
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 
 router = APIRouter()
 
@@ -20,10 +26,19 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     hashed_pwd = hash_password(user.password)
 
+    role = "user"
+    status = "pending"
+
+    if user.email == ADMIN_EMAIL:
+        role = "admin"
+        status = "approved"
+
     new_user = User(
         name=user.name,
         email=user.email,
-        password_hash=hashed_pwd
+        password_hash=hashed_pwd,
+        role=role,
+        status=status
     )
 
     db.add(new_user)
@@ -60,9 +75,16 @@ def login(
             detail="Invalid password"
         )
 
+    if existing_user.role != "admin" and existing_user.status != "approved":
+        raise HTTPException(
+            status_code=403,
+            detail="Account not approved yet"
+        )
+
     access_token = create_access_token(
         data={
-            "sub": existing_user.email
+            "sub": existing_user.email,
+            "role": existing_user.role
         }
     )
 
@@ -70,10 +92,6 @@ def login(
         "access_token": access_token,
         "token_type": "bearer"
     }
-
-@router.get("/users")
-def get_users(db: Session = Depends(get_db)):
-    return db.query(User).all()
 
 @router.get("/me")
 def read_current_user(
@@ -83,5 +101,7 @@ def read_current_user(
     return {
         "id": current_user.id,
         "name": current_user.name,
-        "email": current_user.email
+        "email": current_user.email,
+        "role": current_user.role
     }
+
